@@ -91,6 +91,10 @@ textarea:focus-visible {
   align-items: center;
   gap: 16px;
 }
+.bar__actions {
+  display: flex;
+  gap: 8px;
+}
 .bar {
   margin-bottom: 24px;
 }

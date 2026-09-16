@@ -13,7 +13,6 @@ import base64
 import importlib.util
 import ipaddress
 import json
-import logging
 import mimetypes
 import re
 import socket
@@ -30,39 +29,6 @@ from extension.plugin import plugin_tool
 _studio_spec = importlib.util.spec_from_file_location("image_studio_tool_store", Path(__file__).with_name("studio.py"))
 _studio = importlib.util.module_from_spec(_studio_spec)
 _studio_spec.loader.exec_module(_studio)
-logger = logging.getLogger(__name__)
-
-
-def _safe_error_message(exc: BaseException) -> str:
-    """Return a useful diagnostic without exposing credentials or provider bodies."""
-    text = str(exc).strip().replace("\n", " ")
-    if len(text) > _MAX_DIAGNOSTIC_LENGTH:
-        text = text[:_MAX_DIAGNOSTIC_LENGTH - 3] + "..."
-    for marker in ("bearer ", "api_key=", "api-key=", "authorization:"):
-        if marker in text.casefold():
-            return "provider request failed (sensitive details redacted)"
-    return text or exc.__class__.__name__
-
-
-def _error_result(*, tool: str, trace_id: str, error_code: str, report: str, exc: BaseException | None = None, **fields: Any) -> dict[str, Any]:
-    if exc is not None:
-        logger.warning(
-            "image plugin %s failed trace_id=%s error_code=%s: %s",
-            tool,
-            trace_id,
-            error_code,
-            _safe_error_message(exc),
-            exc_info=logger.isEnabledFor(logging.DEBUG),
-        )
-    return {
-        "status": "error",
-        "tool": tool,
-        "trace_id": trace_id,
-        "error_code": error_code,
-        "error": _safe_error_message(exc) if exc is not None else error_code,
-        "report": report,
-        **fields,
-    }
 
 
 def _tracked(mode):
@@ -72,18 +38,7 @@ def _tracked(mode):
             # Page submissions are recorded at the executor boundary, including executor failures.
             if payload.get("source") == "plugin-page":
                 return await method(self, payload)
-            try:
-                ledger = _studio.Store(self.storage)
-            except _studio.StorageUnavailable as exc:
-                trace_id = _trace_id(payload, f"trace-image-{mode}")
-                tool_name = "image_edit_tool" if mode == "edit" else "image_generate_tool"
-                return _error_result(
-                    tool=tool_name,
-                    trace_id=trace_id,
-                    error_code="storage_unavailable",
-                    report="Image task could not start because plugin storage is unavailable. Check Redis and try again.",
-                    exc=exc,
-                )
+            ledger = _studio.Store(self.storage)
             owner = str(payload.get("actor_id") or "unknown")
             normalized = dict(payload)
             normalized["prompt"] = _extract_prompt(payload, _resolve_query(payload))
@@ -111,7 +66,6 @@ _DEFAULT_SIZE = "1024x1024"
 _DEFAULT_OPENAI_BASE = "https://api.openai.com/v1"
 _DEFAULT_OPENAI_MODEL = "gpt-image-1"
 _DEFAULT_MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
-_MAX_DIAGNOSTIC_LENGTH = 300
 _DEFAULT_HTTP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
     AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
@@ -227,6 +181,7 @@ def _openai_options(config: dict[str, Any], selected_model: str) -> tuple[str, s
     return base_url.rstrip("/"), (model or _DEFAULT_OPENAI_MODEL)
 
 
+
 def _load_api_key(config: dict[str, Any]) -> str:
     """Read the provider key saved by the plugin details form."""
     openai_cfg = config.get("openai_images", {}) if isinstance(config.get("openai_images", {}), dict) else {}
@@ -235,6 +190,24 @@ def _load_api_key(config: dict[str, Any]) -> str:
         raise ValueError("missing api key; configure it on the plugin details page")
     return value
 
+
+def _provider_settings(config: dict[str, Any], llm: Any | None, selected_model: str) -> tuple[str, str, str]:
+    """Resolve either the host-provided model or the plugin-specific settings."""
+    source = str(config.get("model_source") or "custom").strip()
+    if source == "host_model":
+        if llm is None:
+            raise ValueError("host model is not configured")
+        base_url = str(getattr(llm, "base_url", "") or "").strip()
+        api_key = str(getattr(llm, "api_key", "") or "").strip()
+        model = str(getattr(llm, "model", "") or selected_model).strip()
+        if not base_url or not api_key or not model:
+            raise ValueError("host model is not configured")
+        return base_url.rstrip("/"), api_key, model
+    if source != "custom":
+        raise ValueError("unsupported model source")
+    base_url, model = _openai_options(config, selected_model)
+    api_key = _load_api_key(config)
+    return base_url, api_key, model
 
 _EDIT_TRANSPORTS = ("auto", "images_edits", "input_references")
 
@@ -254,9 +227,7 @@ _HTTP_STATUS_CODES = {
 }
 
 
-def _provider_error_code(exc: BaseException) -> str:  # noqa: PLR0911
-    if isinstance(exc, _studio.StorageUnavailable):
-        return 'storage_unavailable'
+def _provider_error_code(exc: BaseException) -> str:
     if isinstance(exc, error.HTTPError):
         for name, codes in _HTTP_STATUS_CODES.items():
             if exc.code in codes:
@@ -717,6 +688,7 @@ class ImageGenerateTool:
         # The host binds this plugin's directory and key namespace before handing
         # the object over, so nothing here knows where the data actually lives.
         self.storage = (runtime_context or {}).get("storage")
+        self.llm = (runtime_context or {}).get("llm_config")
 
     @_tracked("generate")
     async def execute(self, payload: dict[str, object]) -> dict[str, object]:
@@ -744,7 +716,7 @@ class ImageGenerateTool:
         cache_ttl_seconds = int(options["cache_ttl_seconds"])
         try:
             output_dir, keep_last = self.storage.dir("images"), _keep_last(config)
-            base_url, model = _openai_options(config, model)
+            base_url, _, model = _provider_settings(config, self.llm, model)
             cache_prompt = json.dumps(
                 [prompt, str(payload.get("actor_id") or "unknown"), str(output_dir), base_url],
                 ensure_ascii=False,
@@ -777,8 +749,7 @@ class ImageGenerateTool:
 
             note: str | None = None
             if provider in {"openai", "openai_images", "openai-images"}:
-                openai_base_url, openai_model = _openai_options(config, model)
-                api_key = _load_api_key(config)
+                openai_base_url, api_key, openai_model = _provider_settings(config, self.llm, model)
                 security_cfg = config.get("security", {}) if isinstance(config.get("security", {}), dict) else {}
                 max_download_bytes = _coerce_int(
                     security_cfg.get("max_download_bytes", _DEFAULT_MAX_DOWNLOAD_BYTES),
@@ -833,18 +804,20 @@ class ImageGenerateTool:
                 "note": note,
                 "report": f"Image generated successfully: {len(image_paths)} file(s).",
             }
-        except Exception as exc:
-            code = _provider_error_code(exc)
-            logger.exception("Unexpected image tool failure trace_id=%s error_code=%s", trace_id, code)
-            return _error_result(
-                tool="image_tool",
-                trace_id=trace_id,
-                error_code=code,
-                report="Image task failed. Check the plugin configuration and service availability.",
-                exc=exc,
-                query=query,
-                prompt=prompt,
-            )
+        except (error.URLError, TimeoutError, ValueError, json.JSONDecodeError, OSError) as exc:
+            return {
+                "status": "error",
+                "tool": "image_generate_tool",
+                "trace_id": trace_id,
+                "query": query,
+                "prompt": prompt,
+                "provider": provider,
+                "model": model,
+                "error_code": _provider_error_code(exc),
+                "error": str(exc),
+                "report": f"Image generation failed: {exc}",
+            }
+
 
 @plugin_tool(
     "image_edit_tool",
@@ -861,6 +834,7 @@ class ImageEditTool:
     def __init__(self, plugin: Any | None = None, runtime_context: dict[str, Any] | None = None, **_: Any) -> None:
         self.plugin = plugin
         self.storage = (runtime_context or {}).get("storage")
+        self.llm = (runtime_context or {}).get("llm_config")
 
     @_tracked("edit")
     async def execute(self, payload: dict[str, object]) -> dict[str, object]:
@@ -925,8 +899,7 @@ class ImageEditTool:
                     "report": "Image edit failed: the mask image is no longer available.",
                 }
             output_dir, keep_last = self.storage.dir("images"), _keep_last(config)
-            openai_base_url, openai_model = _openai_options(config, model)
-            api_key = _load_api_key(config)
+            openai_base_url, api_key, openai_model = _provider_settings(config, self.llm, model)
             # 中文: 同 image_generate_tool——provider 调用与落盘都是同步阻塞操作，
             # 放到工作线程执行以免卡住事件循环。
             binary_images, note = await asyncio.to_thread(
@@ -961,18 +934,18 @@ class ImageEditTool:
                 "note": note,
                 "report": f"Image edited successfully: {len(image_paths)} file(s).",
             }
-        except Exception as exc:
-            code = _provider_error_code(exc)
-            logger.exception("Unexpected image tool failure trace_id=%s error_code=%s", trace_id, code)
-            return _error_result(
-                tool="image_tool",
-                trace_id=trace_id,
-                error_code=code,
-                report="Image task failed. Check the plugin configuration and service availability.",
-                exc=exc,
-                query=query,
-                prompt=prompt,
-            )
+        except (error.URLError, TimeoutError, ValueError, json.JSONDecodeError, OSError) as exc:
+            return {
+                "status": "error",
+                "tool": "image_edit_tool",
+                "trace_id": trace_id,
+                "query": query,
+                "prompt": prompt,
+                "error_code": _provider_error_code(exc),
+                "error": str(exc),
+                "report": f"Image edit failed: {exc}",
+            }
+
 
 @plugin_tool(
     "image_prompt_tool",

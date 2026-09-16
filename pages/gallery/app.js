@@ -22,6 +22,7 @@
       "tab.history": "我的任务",
       "tab.analytics": "使用统计",
       "action.refresh": "刷新",
+      "action.testConnection": "检查模型配置",
       "action.generate": "生成图像",
       "action.submitEdit": "提交改图",
       "action.previous": "上一页",
@@ -122,6 +123,7 @@
       "notice.uploadFailed": "上传失败：{message}",
       "notice.submitFailed": "提交失败：{message}",
       "notice.initFailed": "工作室初始化失败：{message}",
+      "notice.connectionOk": "模型配置可用：{provider} / {model}。为保护密钥，未主动向外部地址发请求。",
       "notice.fileTooLarge": "参考图不能超过 8 MiB",
       "notice.unreadableFile": "无法读取图片",
       "error.reference_required": "请先选择一张参考图。",
@@ -145,6 +147,9 @@
       "error.too_many_pending_tasks": "最多同时提交 3 个任务，请等待当前任务完成。",
       "error.executor_unavailable": "图像生成服务暂不可用。",
       "error.storage_unavailable": "存储服务暂不可用，请稍后重试。",
+      "error.host_model_unconfigured": "宿主模型未配置完整，请先在模型设置中配置服务商、模型和密钥。",
+      "error.custom_model_unconfigured": "插件专用服务未配置完整，请填写 API 地址和密钥。",
+      "error.invalid_model_source": "模型来源配置无效。",
       "error.task_failed": "任务失败或执行中断，请检查服务配置后重试。",
       "error.missing_prompt": "请填写提示词。",
       "error.missing_source_image": "请先选择要修改的图片。",
@@ -168,6 +173,7 @@
       "tab.history": "My tasks",
       "tab.analytics": "Usage",
       "action.refresh": "Refresh",
+      "action.testConnection": "Check model config",
       "action.generate": "Generate image",
       "action.submitEdit": "Submit edit",
       "action.previous": "Previous",
@@ -271,6 +277,7 @@
       "notice.uploadFailed": "Upload failed: {message}",
       "notice.submitFailed": "Submission failed: {message}",
       "notice.initFailed": "The studio could not start: {message}",
+      "notice.connectionOk": "Model configuration is ready: {provider} / {model}. No external request was made to protect the key.",
       "notice.fileTooLarge": "A reference image must be 8 MiB or smaller",
       "notice.unreadableFile": "Could not read that image",
       "error.reference_required": "Choose a reference image first.",
@@ -294,6 +301,9 @@
       "error.too_many_pending_tasks": "Three tasks can run at once. Wait for one to finish.",
       "error.executor_unavailable": "Image generation is unavailable right now.",
       "error.storage_unavailable": "Storage is unavailable right now. Try again shortly.",
+      "error.host_model_unconfigured": "The host model is incomplete. Configure its provider, model and key first.",
+      "error.custom_model_unconfigured": "The plugin-specific service is incomplete. Enter its API URL and key.",
+      "error.invalid_model_source": "The model source setting is invalid.",
       "error.task_failed": "The task failed or was interrupted. Check the service settings and retry.",
       "error.missing_prompt": "Write a prompt first.",
       "error.missing_source_image": "Choose the image you want to edit.",
@@ -775,7 +785,18 @@
     .querySelectorAll("[data-tab]")
     .forEach((el) => el.addEventListener("click", () => tab(el.dataset.tab)));
   $("clear-reference").addEventListener("click", clearReference);
-  $("refresh").addEventListener("click", refresh);
+  $("test-connection").addEventListener("click", async () => {
+    const button = $("test-connection");
+    button.disabled = true;
+    try {
+      const result = await bridge.apiPost("connectivity", {});
+      notice(t("notice.connectionOk", { provider: result.provider || result.source, model: result.model || "-" }));
+    } catch (error) {
+      notice(t("notice.submitFailed", { message: reason(error) }));
+    } finally {
+      button.disabled = false;
+    }
+  });  $("refresh").addEventListener("click", refresh);
   $("category").addEventListener("change", renderTemplates);
   $("days").addEventListener("change", () => loadStats().catch((error) => notice(reason(error))));
   $("status-filter").addEventListener("change", () => {

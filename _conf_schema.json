@@ -1,4 +1,62 @@
 {
+  "model_source": {
+    "type": "string",
+    "label": {
+      "zh": "模型来源",
+      "en": "Model source"
+    },
+    "hint": {
+      "zh": "使用宿主已配置模型，或使用下方插件专用配置",
+      "en": "Use a host-configured model or the plugin-specific settings below"
+    },
+    "default": "custom",
+    "options": [
+      "host_model",
+      "custom"
+    ],
+    "option_labels": {
+      "host_model": {
+        "zh": "宿主已配置模型",
+        "en": "Host-configured model"
+      },
+      "custom": {
+        "zh": "插件专用配置",
+        "en": "Plugin-specific configuration"
+      }
+    }
+  },
+  "llm": {
+    "type": "object",
+    "label": {
+      "zh": "宿主模型",
+      "en": "Host model"
+    },
+    "description": {
+      "zh": "与 plugin-template 相同，由宿主解析已配置的 provider 和模型",
+      "en": "Resolved by the host from configured providers, as in plugin-template"
+    },
+    "items": {
+      "provider": {
+        "type": "string",
+        "label": {
+          "zh": "服务商",
+          "en": "Provider"
+        },
+        "default": "",
+        "options_source": "llm.providers"
+      },
+      "model": {
+        "type": "string",
+        "label": {
+          "zh": "图像模型",
+          "en": "Image model"
+        },
+        "default": "",
+        "options_source": "llm.models",
+        "depends_on": "provider"
+      }
+    }
+  },
   "output": {
     "type": "object",
     "label": {

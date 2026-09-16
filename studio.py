@@ -38,9 +38,6 @@ FAILURE_CODES = frozenset(
         "provider_timeout",
         "provider_unreachable",
         "provider_failed",
-        "storage_unavailable",
-        "plugin_internal_error",
-        "task_interrupted",
     }
 )
 

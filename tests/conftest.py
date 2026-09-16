@@ -17,8 +17,11 @@ from __future__ import annotations
 
 import os
 import shutil
+import socket
+import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -90,14 +93,48 @@ def check_context(host: Any, bundle: Any) -> Any:
 
 
 @pytest.fixture(scope="session")
-def redis_url() -> str:
-    """Use an already running local Redis; skip integration tests when unavailable."""
-    url = os.environ.get("IMAGE_PLUGIN_TEST_REDIS_URL", "redis://127.0.0.1:6379/0")
+def redis_url(tmp_path_factory: Any) -> str:
+    """Start an isolated Redis for the host-backed image integration tests."""
+    executable = shutil.which("redis-server")
+    if not executable:
+        pytest.skip("redis-server is required for plugin storage integration tests")
+    directory = tmp_path_factory.mktemp("image-studio-redis")
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+    process = subprocess.Popen(
+        [
+            executable,
+            "--bind",
+            "127.0.0.1",
+            "--port",
+            str(port),
+            "--save",
+            "",
+            "--appendonly",
+            "no",
+            "--dir",
+            str(directory),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+    )
+    url = f"redis://127.0.0.1:{port}/0"
     client = redis.Redis.from_url(url, socket_connect_timeout=0.2, socket_timeout=0.2)
     try:
-        client.ping()
-    except redis.RedisError:
-        pytest.skip("a Redis server is required for plugin storage integration tests")
+        for _ in range(100):
+            try:
+                client.ping()
+                break
+            except redis.RedisError:
+                if process.poll() is not None:
+                    pytest.fail("isolated Redis process exited before becoming ready")
+                time.sleep(0.05)
+        else:
+            pytest.fail("isolated Redis did not become ready")
+        yield url
     finally:
         client.close()
-    return url
+        process.terminate()
+        process.wait(timeout=10)

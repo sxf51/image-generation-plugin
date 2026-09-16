@@ -50,6 +50,33 @@ def register_web_apis(web: Any, plugin: Any, runtime_context: dict[str, Any]) ->
         timeout = float((plugin.config or {}).get("generation", {}).get("timeout_seconds", 180))
         await asyncio.to_thread(ledger.expire, max(600, timeout + 300))
 
+    async def connectivity(request):
+        _ = request
+        config = plugin.config or {}
+        source = str(config.get("model_source") or "custom")
+        if source == "host_model":
+            llm = runtime_context.get("llm_config")
+            if llm is None or not getattr(llm, "base_url", "") or not getattr(llm, "api_key", ""):
+                return error_response("host_model_unconfigured", 422)
+            return {
+                "status": "success",
+                "source": source,
+                "provider": getattr(llm, "provider_name", "") or getattr(llm, "provider", ""),
+                "model": getattr(llm, "model", ""),
+                "network_probe": False,
+            }
+        if source == "custom":
+            provider = config.get("openai_images", {}) if isinstance(config.get("openai_images"), dict) else {}
+            if not str(provider.get("api_base") or "").strip() or not str(provider.get("api_key") or "").strip():
+                return error_response("custom_model_unconfigured", 422)
+            return {
+                "status": "success",
+                "source": source,
+                "provider": "openai_images",
+                "model": str(provider.get("model") or ""),
+                "network_probe": False,
+            }
+        return error_response("invalid_model_source", 422)
     async def template_list(request):
         return {"items": templates}
 
@@ -219,20 +246,11 @@ def register_web_apis(web: Any, plugin: Any, runtime_context: dict[str, Any]) ->
             if not isinstance(result, dict):
                 result = {"status": "error"}
         except asyncio.CancelledError:
-            await asyncio.to_thread(
-                ledger.finish,
-                task_id,
-                payload["actor_id"],
-                {"status": "error", "error_code": "task_interrupted"},
-            )
+            await asyncio.to_thread(ledger.finish, task_id, payload["actor_id"], {"status": "error"})
             raise
         except Exception:
             logger.exception("Image studio task %s failed", task_id)
-            result = {
-                "status": "error",
-                "error_code": "plugin_internal_error",
-                "report": "The image task failed inside the plugin. Check the plugin log using the trace id.",
-            }
+            result = {"status": "error"}
         await asyncio.to_thread(ledger.finish, task_id, payload["actor_id"], result)
         return result
 
@@ -273,16 +291,15 @@ def register_web_apis(web: Any, plugin: Any, runtime_context: dict[str, Any]) ->
         async def call(request):
             try:
                 return await handler(request)
-            except (_studio.StorageUnavailable, RedisError):
-                logger.exception("Image studio storage unavailable endpoint=%s", getattr(handler, "__name__", "unknown"))
+            except RedisError:
+                logger.exception("Image studio Redis storage unavailable")
                 return error_response("storage_unavailable", 503)
-            except Exception:
-                logger.exception("Image studio endpoint failed endpoint=%s", getattr(handler, "__name__", "unknown"))
-                return error_response("plugin_internal_error", 500)
 
         return call
+
     for endpoint, handler, methods, description in (
         ("templates", template_list, ["GET"], "Prompt templates"),
+        ("connectivity", connectivity, ["POST"], "Validate the selected image model configuration"),
         ("stats", stats, ["GET"], "Usage statistics, UTC daily buckets"),
         ("gallery", gallery, ["GET"], "Current user output images"),
         ("recent", recent, ["GET"], "Recent outputs"),

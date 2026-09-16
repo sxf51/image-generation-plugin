@@ -1,5 +1,5 @@
 name: image-generation-plugin
-version: 2.0.0
+version: 0.1.2
 description: Decoupled image studio with templates, references, editing, task history
   and usage analytics
 enabled: true
