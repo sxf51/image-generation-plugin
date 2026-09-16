@@ -1,0 +1,194 @@
+[
+  {
+    "id": "product",
+    "category": { "zh": "电商", "en": "E-commerce" },
+    "title": { "zh": "棚拍商品主图", "en": "Studio product shot" },
+    "variables": { "zh": "{商品}", "en": "{product}" },
+    "prompt": {
+      "zh": "为「{商品}」拍摄电商主图。单一主体，完整展示轮廓与材质；暖白无缝背景，左前方大面积柔光，真实接触阴影。商品居中占画面约七成，保留边缘留白。不要额外文字、水印或装饰。",
+      "en": "Shoot a hero product image of {product}. A single subject with its full silhouette and material visible; warm white seamless backdrop, broad soft light from the front left, a real contact shadow. Centre the product at about seventy percent of the frame and keep the edges clear. No added text, watermark or ornament."
+    },
+    "requires_reference": false,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "campaign",
+    "category": { "zh": "广告", "en": "Advertising" },
+    "title": { "zh": "品牌发布视觉", "en": "Product launch visual" },
+    "variables": { "zh": "{品牌}、{产品}、{卖点}", "en": "{brand}, {product}, {selling point}" },
+    "prompt": {
+      "zh": "设计「{品牌}」的「{产品}」发布广告，核心卖点为「{卖点}」。让产品成为视觉中心，用一个清晰的场景隐喻表达卖点；安排标题区与行动提示区，文字短而可读，限制为两种字体和三种主色，避免信息堆叠。",
+      "en": "Design a launch advertisement for {product} by {brand}, built around {selling point}. Make the product the visual centre and carry the claim with one clear scene metaphor. Lay out a headline area and a call-to-action area, keep the wording short and readable, limit yourself to two typefaces and three main colours, and avoid stacking information."
+    },
+    "requires_reference": false,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "poster",
+    "category": { "zh": "海报", "en": "Poster" },
+    "title": { "zh": "活动海报", "en": "Event poster" },
+    "variables": { "zh": "{活动名称}、{日期}、{地点}", "en": "{event}, {date}, {venue}" },
+    "prompt": {
+      "zh": "制作「{活动名称}」活动海报。准确呈现日期「{日期}」和地点「{地点}」。建立标题、活动信息、辅助图形三级层次，采用明确网格、大幅留白与醒目的主题图形，文字不与主体重叠，不添加未提供的信息。",
+      "en": "Make a poster for {event}. Render the date {date} and the venue {venue} exactly as given. Build three levels of hierarchy: title, event details, supporting artwork. Use a clear grid, generous white space and one striking motif. Keep text off the subject and invent no information that was not supplied."
+    },
+    "requires_reference": false,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "portrait",
+    "category": { "zh": "摄影", "en": "Photography" },
+    "title": { "zh": "编辑风格人像", "en": "Editorial portrait" },
+    "variables": { "zh": "{人物描述}、{环境}", "en": "{person}, {setting}" },
+    "prompt": {
+      "zh": "拍摄「{人物描述}」在「{环境}」中的编辑风格人像。自然姿态和真实皮肤纹理，眼部清晰，柔和侧光与轻微背景虚化；服装、手部和背景符合真实空间关系，色调克制，避免塑料感和过度磨皮。",
+      "en": "Shoot an editorial portrait of {person} in {setting}. Natural posture and real skin texture, sharp eyes, soft side light and a gentle background falloff. Keep clothing, hands and background in believable spatial relation, hold the palette restrained, and avoid a plastic or over-smoothed look."
+    },
+    "requires_reference": false,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "character",
+    "category": { "zh": "角色", "en": "Character" },
+    "title": { "zh": "角色设定三视图", "en": "Character turnaround sheet" },
+    "variables": { "zh": "{角色}、{风格}", "en": "{character}, {style}" },
+    "prompt": {
+      "zh": "为「{角色}」绘制「{风格}」角色设定页，包含正面、侧面和背面全身视图。三个视图采用一致比例、服饰、配色与配件，站姿中立，背景纯净；角落补充表情与关键道具，不让视图互相遮挡。",
+      "en": "Draw a {style} character sheet for {character} with full-body front, side and back views. Keep proportions, outfit, palette and accessories identical across all three, use a neutral stance and a clean background, and add expressions plus key props in a corner without letting the views overlap."
+    },
+    "requires_reference": false,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "dashboard",
+    "category": { "zh": "界面", "en": "Interface" },
+    "title": { "zh": "数据产品概念稿", "en": "Data product concept" },
+    "variables": { "zh": "{产品名称}、{目标用户}", "en": "{product name}, {audience}" },
+    "prompt": {
+      "zh": "设计面向「{目标用户}」的「{产品名称}」桌面数据产品界面概念稿。包含侧边导航、页面标题、四张指标卡、趋势图和数据表。统一间距与圆角，文字清晰，采用可信的示例数据和明确选中状态，呈现完整屏幕。",
+      "en": "Design a desktop data-product interface concept for {product name}, aimed at {audience}. Include side navigation, a page title, four metric cards, a trend chart and a data table. Keep spacing and corner radii consistent, text legible, sample data believable and the selected state obvious, and show the whole screen."
+    },
+    "requires_reference": false,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "infographic",
+    "category": { "zh": "信息图", "en": "Infographic" },
+    "title": { "zh": "知识说明图", "en": "Explainer graphic" },
+    "variables": { "zh": "{主题}、{要点}", "en": "{topic}, {key points}" },
+    "prompt": {
+      "zh": "制作关于「{主题}」的信息图，内容仅使用「{要点}」。按阅读顺序分组，每组使用简洁图示和短标题，通过编号和箭头表达关系；留白充足，文字可读，避免添加未经提供的数字或事实。",
+      "en": "Build an infographic about {topic} using only {key points}. Group the content in reading order, give each group a simple icon and a short heading, and show relationships with numbers and arrows. Leave generous white space, keep text readable, and add no figure or fact that was not supplied."
+    },
+    "requires_reference": false,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "social",
+    "category": { "zh": "社交", "en": "Social" },
+    "title": { "zh": "内容封面", "en": "Content cover" },
+    "variables": { "zh": "{标题}、{主题}", "en": "{headline}, {topic}" },
+    "prompt": {
+      "zh": "为「{主题}」制作社交媒体封面，主标题必须准确写为「{标题}」。使用强对比的视觉焦点、简洁背景和适合手机阅读的大字；关键信息远离四周裁切区，不加入多余标志或水印。",
+      "en": "Create a social media cover for {topic} whose headline reads exactly {headline}. Use one high-contrast focal point, a clean background and type large enough to read on a phone. Keep key information away from the edges where it may be cropped, and add no extra logo or watermark."
+    },
+    "requires_reference": false,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "background",
+    "category": { "zh": "改图", "en": "Editing" },
+    "title": { "zh": "替换商品背景", "en": "Replace the product background" },
+    "variables": { "zh": "{新场景}", "en": "{new scene}" },
+    "prompt": {
+      "zh": "以参考图为基础，仅把背景替换为「{新场景}」。保持商品外形、标签文字、品牌标志、材质和比例不变；重新匹配自然光线、反射和接触阴影，使商品真实融入环境。不要新增配件或修改包装。",
+      "en": "Starting from the reference image, replace only the background with {new scene}. Leave the product shape, label text, brand mark, material and proportions untouched. Rebuild the lighting, reflections and contact shadow so the product genuinely sits in the new setting. Add no props and do not alter the packaging."
+    },
+    "requires_reference": true,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "restyle",
+    "category": { "zh": "改图", "en": "Editing" },
+    "title": { "zh": "插画风格转换", "en": "Illustration restyle" },
+    "variables": { "zh": "{目标风格}", "en": "{target style}" },
+    "prompt": {
+      "zh": "将参考图转换为「{目标风格}」插画。保持主体身份、姿势、构图及关键轮廓，仅改变笔触、颜色表达和材质表现。保留主体与背景的空间关系，不新增或删除主要对象。",
+      "en": "Convert the reference image into a {target style} illustration. Keep the subject's identity, pose, composition and key contours; change only brushwork, colour treatment and how material reads. Preserve the spatial relationship between subject and background, and neither add nor remove a major object."
+    },
+    "requires_reference": true,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "retouch",
+    "category": { "zh": "改图", "en": "Editing" },
+    "title": { "zh": "局部修改", "en": "Local edit" },
+    "variables": { "zh": "{修改区域}、{修改内容}", "en": "{area}, {change}" },
+    "prompt": {
+      "zh": "编辑参考图中的「{修改区域}」，修改为「{修改内容}」。其余区域保持原样，尤其保持人物身份、构图、背景与原有文字不变。让修改边缘自然衔接，匹配原图光照、透视和纹理。",
+      "en": "Edit {area} in the reference image so that it becomes {change}. Leave everything else exactly as it is, in particular the person's identity, the composition, the background and any existing text. Blend the edited edges naturally and match the original lighting, perspective and texture."
+    },
+    "requires_reference": true,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  },
+  {
+    "id": "restore",
+    "category": { "zh": "改图", "en": "Editing" },
+    "title": { "zh": "老照片修复", "en": "Old photo restoration" },
+    "variables": { "zh": "{修复要求}", "en": "{restoration goal}" },
+    "prompt": {
+      "zh": "修复参考照片，重点处理「{修复要求}」。去除划痕、灰尘和褪色，恢复合理对比度与细节。保持人物身份、表情、时代服饰与原始构图，缺失区域谨慎重建，避免过度锐化与虚构细节。",
+      "en": "Restore the reference photograph, concentrating on {restoration goal}. Remove scratches, dust and fading, and bring back plausible contrast and detail. Keep the person's identity, expression, period clothing and the original composition; rebuild missing areas conservatively and avoid over-sharpening or invented detail."
+    },
+    "requires_reference": true,
+    "source_url": "https://github.com/EvoLinkAI/awesome-gpt-image-2-API-and-Prompts",
+    "attribution": {
+      "zh": "原创参数化模板；分类与工作流参考 EvoLinkAI 提示词资料库。",
+      "en": "Original parameterised template; categories and workflow informed by the EvoLinkAI prompt library."
+    }
+  }
+]

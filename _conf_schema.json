@@ -1,0 +1,127 @@
+{
+  "output": {
+    "type": "object",
+    "label": {
+      "zh": "图片存储",
+      "en": "Image storage"
+    },
+    "items": {
+      "keep_last": {
+        "type": "int",
+        "label": {
+          "zh": "保留数量",
+          "en": "Images to retain"
+        },
+        "default": 200
+      }
+    }
+  },
+  "generation": {
+    "type": "object",
+    "label": {
+      "zh": "生成参数",
+      "en": "Generation settings"
+    },
+    "items": {
+      "timeout_seconds": {
+        "type": "int",
+        "label": {
+          "zh": "超时（秒）",
+          "en": "Timeout (seconds)"
+        },
+        "default": 180
+      },
+      "provider": {
+        "type": "string",
+        "label": {
+          "zh": "服务商",
+          "en": "Provider"
+        },
+        "default": "openai_images",
+        "options": [
+          "openai_images"
+        ]
+      },
+      "image_count": {
+        "type": "int",
+        "label": {
+          "zh": "图片数量",
+          "en": "Image count"
+        },
+        "default": 1
+      },
+      "size": {
+        "type": "string",
+        "label": {
+          "zh": "图片尺寸",
+          "en": "Image size"
+        },
+        "default": "1024x1024",
+        "options": [
+          "1024x1024",
+          "1536x1024",
+          "1024x1536"
+        ]
+      },
+      "cache_ttl_seconds": {
+        "type": "int",
+        "label": {
+          "zh": "缓存时长（秒）",
+          "en": "Cache duration (seconds)"
+        },
+        "default": 1800
+      }
+    }
+  },
+  "openai_images": {
+    "type": "object",
+    "label": {
+      "zh": "OpenAI 兼容服务",
+      "en": "OpenAI-compatible provider"
+    },
+    "items": {
+      "api_base": {
+        "type": "string",
+        "label": {
+          "zh": "API 地址",
+          "en": "API base URL"
+        },
+        "default": "https://openrouter.ai/api/v1"
+      },
+      "api_key": {
+        "type": "string",
+        "label": {
+          "zh": "API 密钥",
+          "en": "API key"
+        },
+        "hint": {
+          "zh": "请在此填写图像服务密钥",
+          "en": "Enter the image service key here"
+        },
+        "default": "",
+        "secret": true
+      },
+      "model": {
+        "type": "string",
+        "label": {
+          "zh": "模型",
+          "en": "Model"
+        },
+        "default": "openai/gpt-image-2"
+      },
+      "edit_transport": {
+        "type": "string",
+        "label": {
+          "zh": "改图调用方式",
+          "en": "Image editing transport"
+        },
+        "default": "auto",
+        "options": [
+          "auto",
+          "images_edits",
+          "input_references"
+        ]
+      }
+    }
+  }
+}

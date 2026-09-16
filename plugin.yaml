@@ -1,0 +1,144 @@
+name: image-generation-plugin
+version: 2.0.0
+description: Decoupled image studio with templates, references, editing, task history
+  and usage analytics
+enabled: true
+metadata:
+  owner: capstone
+  contact: capstone@example.com
+  category: media
+  purpose: image-generation
+dependencies: {}
+ui:
+  pages:
+  - name: gallery
+    title:
+      zh: 图像工作室
+      en: Image Studio
+    description:
+      zh: 提示词模板、参考图创作、连续改图、历史任务与使用统计
+      en: Templates, reference images, iterative editing, history and usage analytics
+    nav: sidebar
+  panels:
+  - id: output
+    title:
+      zh: 输出概览
+      en: Output overview
+    description:
+      zh: 由 plugin.yaml 声明、宿主渲染，无需插件写任何前端代码
+      en: Declared in plugin.yaml and rendered by the host - no frontend code required
+    widgets:
+    - id: count
+      type: stat
+      title:
+        zh: 已生成
+        en: Generated
+      span: 3
+      source:
+        endpoint: stats
+        field: count
+        poll: 15
+    - id: provider
+      type: stat
+      title:
+        zh: 服务商
+        en: Provider
+      span: 3
+      source:
+        endpoint: stats
+        field: provider
+    - id: size
+      type: stat
+      title:
+        zh: 尺寸
+        en: Size
+      span: 3
+      source:
+        endpoint: stats
+        field: size
+    - id: recent
+      type: table
+      title:
+        zh: 最近产出
+        en: Recent output
+      span: 12
+      source:
+        endpoint: recent
+        poll: 30
+      columns:
+      - key: name
+        title:
+          zh: 文件
+          en: File
+      - key: size_kb
+        title:
+          zh: 大小 (KB)
+          en: Size (KB)
+        width: 120
+      - key: modified
+        title:
+          zh: 生成时间
+          en: Created
+        width: 180
+config:
+  security:
+    max_download_bytes: 26214400
+    allow_private_download_urls: true
+  commands:
+  - command: /draw
+    usage: /draw <prompt>
+    description: Quick image generation
+    priority: 13
+    level: 2
+    route: tool
+    tool: image_generate_tool
+    requires_tool: image_generate_tool
+  - command: /edit
+    usage: /edit <prompt>
+    description: Edit an existing image
+    priority: 14
+    level: 2
+    route: tool
+    tool: image_edit_tool
+    requires_tool: image_edit_tool
+  - command: /image-prompt
+    usage: /image-prompt <prompt>
+    description: Normalize a prompt locally using a decorated function tool
+    priority: 15
+    level: 2
+    route: tool
+    tool: image_prompt_tool
+    requires_tool: image_prompt_tool
+  - command: /image-status
+    usage: /image-status
+    description: Inspect non-secret plugin status using an explicitly registered tool
+    priority: 16
+    level: 1
+    route: tool
+    tool: image_plugin_status_tool
+    requires_tool: image_plugin_status_tool
+  - command: /imagine
+    usage: /imagine <creative brief>
+    description: Route an image brief through the image art director subagent
+    priority: 12
+    level: 2
+    route: task
+    requires_tool: image_prompt_tool
+    planner_hints:
+      preferred_route: subagent
+      preferred_subagent: image_art_director
+      fallback_route: tool
+      fallback_tool: image_prompt_tool
+  tool_access:
+    image_prompt_tool:
+      allowed_subagents:
+      - image_art_director
+    image_generate_tool:
+      allowed_subagents:
+      - image_art_director
+    image_edit_tool:
+      allowed_subagents:
+      - image_art_director
+    image_plugin_status_tool:
+      allowed_subagents:
+      - image_art_director

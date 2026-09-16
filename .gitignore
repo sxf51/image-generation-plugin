@@ -1,0 +1,42 @@
+# Python bytecode and test caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local virtual environments and editor metadata
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+.runtime_state/
+
+# Host/runtime data must never be committed to the plugin repository
+data/
+runtime/
+*.sqlite
+*.sqlite3
+*.db
+
+# Temporary outputs created by local tests or development servers
+.tmp/
+tmp/
+dist/
+build/
+*.log
+logs/
+
+# OS metadata
+.DS_Store
+Thumbs.db

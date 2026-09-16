@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image Studio</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <!--
+    Static text carries a data-i18n key instead of a sentence. app.js fills every
+    key from its own dictionary using the locale the host bridge reports, and
+    refills it when the reader switches language. Nothing here is written in one
+    language for everyone.
+  -->
+  <body>
+    <header class="bar">
+      <div>
+        <p class="eyebrow">IMAGE STUDIO</p>
+        <h1 data-i18n="app.title"></h1>
+        <p data-i18n="app.tagline"></p>
+      </div>
+      <button id="refresh" type="button" data-i18n="action.refresh"></button>
+    </header>
+    <nav data-i18n-aria-label="nav.label">
+      <button data-tab="create" aria-selected="true" data-i18n="tab.create"></button>
+      <button data-tab="templates" aria-selected="false" data-i18n="tab.templates"></button>
+      <button data-tab="history" aria-selected="false" data-i18n="tab.history"></button>
+      <button data-tab="analytics" aria-selected="false" data-i18n="tab.analytics"></button>
+    </nav>
+    <p id="notice" role="status" aria-live="polite"></p>
+    <main>
+      <section id="create" class="panel">
+        <div class="workspace">
+          <form id="generate" class="generate">
+            <h2 id="mode-title" data-i18n="create.heading"></h2>
+            <p id="template-label" class="muted" data-i18n="create.subheading"></p>
+            <label for="prompt" data-i18n="field.prompt"></label>
+            <textarea
+              id="prompt"
+              rows="8"
+              maxlength="12000"
+              required
+              data-i18n-placeholder="field.promptPlaceholder"
+            ></textarea>
+            <div class="reference-box">
+              <div>
+                <strong data-i18n="reference.title"></strong>
+                <p class="muted" data-i18n="reference.hint"></p>
+              </div>
+              <input
+                id="upload"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                data-i18n-aria-label="reference.choose"
+              />
+              <div id="reference-preview" hidden>
+                <img id="reference-image" data-i18n-alt="reference.current" /><span
+                  id="reference-name"
+                ></span
+                ><button id="clear-reference" type="button" data-i18n="reference.clear"></button>
+              </div>
+            </div>
+            <div class="generate__options">
+              <label
+                ><span data-i18n="field.size"></span
+                ><select id="size">
+                  <option value="1024x1024" data-i18n="size.square"></option>
+                  <option value="1536x1024" data-i18n="size.landscape"></option>
+                  <option value="1024x1536" data-i18n="size.portrait"></option>
+                </select></label
+              >
+              <label
+                ><span data-i18n="field.count"></span
+                ><input id="image-count" type="number" min="1" max="4" value="1" required
+              /></label>
+            </div>
+            <button id="generate-button" class="primary" type="submit" data-i18n="action.generate"></button>
+            <p id="generate-status" role="status" class="muted"></p>
+          </form>
+          <section class="output">
+            <div class="section-heading">
+              <h2 data-i18n="gallery.heading"></h2>
+              <span class="muted" data-i18n="gallery.hint"></span>
+            </div>
+            <div id="grid" class="grid"></div>
+            <p id="empty" class="empty" data-i18n="gallery.empty"></p>
+          </section>
+        </div>
+      </section>
+      <section id="templates" class="panel" hidden>
+        <div class="section-heading">
+          <div>
+            <h2 data-i18n="templates.heading"></h2>
+            <p class="muted" data-i18n="templates.hint"></p>
+          </div>
+          <select id="category" data-i18n-aria-label="templates.category">
+            <option value="" data-i18n="templates.allCategories"></option>
+          </select>
+        </div>
+        <div id="template-grid" class="template-grid"></div>
+        <p class="muted attribution" data-i18n="templates.attribution"></p>
+      </section>
+      <section id="history" class="panel" hidden>
+        <div class="section-heading">
+          <h2 data-i18n="history.heading"></h2>
+          <div class="filters">
+            <input
+              id="search"
+              type="search"
+              data-i18n-placeholder="history.search"
+              data-i18n-aria-label="history.search"
+            /><select id="status-filter" data-i18n-aria-label="history.statusLabel">
+              <option value="" data-i18n="status.all"></option>
+              <option value="queued" data-i18n="status.queued"></option>
+              <option value="running" data-i18n="status.running"></option>
+              <option value="success" data-i18n="status.success"></option>
+              <option value="error" data-i18n="status.error"></option>
+              <option value="interrupted" data-i18n="status.interrupted"></option>
+            </select>
+          </div>
+        </div>
+        <div id="history-list"></div>
+        <div class="pagination">
+          <button id="previous" data-i18n="action.previous"></button><span id="page-label"></span
+          ><button id="next" data-i18n="action.next"></button>
+        </div>
+      </section>
+      <section id="analytics" class="panel" hidden>
+        <div class="section-heading">
+          <div>
+            <h2 data-i18n="analytics.heading"></h2>
+            <p class="muted" data-i18n="analytics.hint"></p>
+          </div>
+          <select id="days" data-i18n-aria-label="analytics.range">
+            <option value="7" data-i18n="analytics.days7"></option>
+            <option value="30" selected data-i18n="analytics.days30"></option>
+            <option value="90" data-i18n="analytics.days90"></option>
+          </select>
+        </div>
+        <div id="stats" class="stats"></div>
+        <section class="chart-card">
+          <h3 data-i18n="analytics.chartTitle"></h3>
+          <p class="muted" data-i18n="analytics.chartHint"></p>
+          <div id="chart"></div>
+          <details>
+            <summary data-i18n="analytics.tableToggle"></summary>
+            <div id="daily-table" class="table-wrap"></div>
+          </details>
+        </section>
+      </section>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>
