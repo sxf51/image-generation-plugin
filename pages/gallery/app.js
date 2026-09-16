@@ -75,6 +75,7 @@
       "history.empty": "没有符合条件的任务。",
       "history.details": "任务详情",
       "history.taskId": "任务 ID：",
+      "history.traceId": "追踪 ID：",
       "history.parent": "来源任务：",
       "history.noParent": "无",
       "history.duration": "耗时：",
@@ -226,6 +227,7 @@
       "history.empty": "No task matches these filters.",
       "history.details": "Task details",
       "history.taskId": "Task ID: ",
+      "history.traceId": "Trace ID: ",
       "history.parent": "Source task: ",
       "history.noParent": "none",
       "history.duration": "Took: ",
@@ -578,6 +580,7 @@
       details.append(element("summary", t("history.details")));
       details.append(
         element("p", t("history.taskId") + task.id),
+        ...(task.trace_id ? [element("p", t("history.traceId") + task.trace_id)] : []),
         element("p", t("history.parent") + (task.parent_id || t("history.noParent"))),
       );
       if (task.finished)

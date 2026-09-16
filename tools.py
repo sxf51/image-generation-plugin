@@ -677,7 +677,6 @@ def _persist_and_prune(output_dir: Path, images: list[bytes], provider: str, kee
     metadata={
         "description": "Generate an image from a text prompt.",
         "input_schema": {"type": "object", "properties": {"prompt": {"type": "string"}}},
-        "consequential": True,
     },
 )
 class ImageGenerateTool:
@@ -825,7 +824,6 @@ class ImageGenerateTool:
     metadata={
         "description": "Edit an existing image with a text instruction.",
         "input_schema": {"type": "object", "properties": {"prompt": {"type": "string"}}},
-        "consequential": True,
     },
 )
 class ImageEditTool:

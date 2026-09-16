@@ -82,6 +82,7 @@ class Store:
             "template_id": payload.get("template_id"),
             "source": None,
             "model": None,
+            "trace_id": None,
             "error": None,
             "images": [],
         }
@@ -160,6 +161,7 @@ class Store:
                         finished=time.time(),
                         source=result.get("source", "provider"),
                         model=result.get("model"),
+                        trace_id=result.get("trace_id"),
                         images=assets,
                         # A message code, never a sentence: the studio page and the chat
                         # client render it in the reader's own language. Only codes from

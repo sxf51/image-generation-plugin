@@ -235,11 +235,14 @@ def register_web_apis(web: Any, plugin: Any, runtime_context: dict[str, Any]) ->
         mode = "edit" if payload.get("image_path") else "generate"
         try:
             timeout = max(1, float((plugin.config or {}).get("generation", {}).get("timeout_seconds", 180)))
+            tool_name = "image_edit_tool" if mode == "edit" else "image_generate_tool"
+            trace_id = f"plugin-page:{plugin.name}:{payload['actor_id']}:{task_id}"
+            tool_payload = {**payload, "trace_id": trace_id}
             result = await asyncio.wait_for(
                 executor.execute(
-                    "image_edit_tool" if mode == "edit" else "image_generate_tool",
-                    payload,
-                    trace_id=f"plugin-page:{plugin.name}:{payload['actor_id']}:{task_id}",
+                    tool_name,
+                    tool_payload,
+                    trace_id=trace_id,
                 ),
                 timeout=timeout + 30,
             )
