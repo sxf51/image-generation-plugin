@@ -20,7 +20,7 @@ import time
 import uuid
 from functools import wraps
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from urllib import error, request
 from urllib.parse import urlparse
 
@@ -671,16 +671,26 @@ def _persist_and_prune(output_dir: Path, images: list[bytes], provider: str, kee
     return paths, None
 
 
-@plugin_tool(
-    "image_generate_tool",
-    tags=("image", "generation", "command"),
-    metadata={
-        "description": "Generate an image from a text prompt.",
-        "input_schema": {"type": "object", "properties": {"prompt": {"type": "string"}}},
-    },
-)
+_GENERATION_PROPERTIES: dict[str, Any] = {
+    "prompt": {"type": "string", "description": "What to draw. Falls back to the command text."},
+    "size": {"type": "string", "description": "Output size such as 1024x1024; defaults to generation.size."},
+    "image_count": {"type": "integer", "minimum": 1, "description": "How many images to return."},
+    "model": {"type": "string", "description": "Provider model; defaults to generation.model."},
+}
+
+
+@plugin_tool("image_generate_tool", tags=("image", "generation", "command"))
 class ImageGenerateTool:
     """Generate images from text prompts via provider API."""
+
+    description = "Generate one or more images from a text prompt and store them for the calling user."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": _GENERATION_PROPERTIES,
+        "required": ["prompt"],
+    }
+    # Calls a paid provider and writes files, so the approval gate applies.
+    consequential = True
 
     def __init__(self, plugin: Any | None = None, runtime_context: dict[str, Any] | None = None, **_: Any) -> None:
         self.plugin = plugin
@@ -819,16 +829,24 @@ class ImageGenerateTool:
             }
 
 
-@plugin_tool(
-    "image_edit_tool",
-    tags=("image", "edit", "command"),
-    metadata={
-        "description": "Edit an existing image with a text instruction.",
-        "input_schema": {"type": "object", "properties": {"prompt": {"type": "string"}}},
-    },
-)
+@plugin_tool("image_edit_tool", tags=("image", "edit", "command"))
 class ImageEditTool:
     """Edit an existing image via OpenAI /v1/images/edits."""
+
+    description = (
+        "Edit an existing image with a text instruction. Uses image_path when given, "
+        "otherwise the image attached to the current message."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {
+            **_GENERATION_PROPERTIES,
+            "image_path": {"type": "string", "description": "An image this plugin produced or the user uploaded."},
+            "mask_path": {"type": "string", "description": "Optional mask; transparent pixels are edited."},
+        },
+        "required": ["prompt"],
+    }
+    consequential = True
 
     def __init__(self, plugin: Any | None = None, runtime_context: dict[str, Any] | None = None, **_: Any) -> None:
         self.plugin = plugin
@@ -984,6 +1002,10 @@ async def normalize_image_prompt(payload: dict[str, object]) -> dict[str, object
 class ImagePluginStatusTool:
     """Explicit registration example exposing non-secret plugin configuration."""
 
+    description = "Report image plugin status without exposing secrets."
+    parameters: ClassVar[dict[str, Any]] = {"type": "object", "properties": {}}
+    consequential = False
+
     def __init__(self, plugin: Any, runtime_context: dict[str, Any]) -> None:
         self.plugin = plugin
         self.runtime_context = runtime_context
@@ -1014,8 +1036,4 @@ def register_tools(tool_registry: Any, plugin: Any, runtime_context: dict[str, A
         ImagePluginStatusTool(plugin, runtime_context),
         name="image_plugin_status_tool",
         tags=("image", "status", "explicit-registration"),
-        metadata={
-            "description": "Report image plugin status without exposing secrets.",
-            "input_schema": {"type": "object", "properties": {}},
-        },
     )

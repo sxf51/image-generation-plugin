@@ -244,6 +244,9 @@ def register_web_apis(web: Any, plugin: Any, runtime_context: dict[str, Any]) ->
                     tool_payload,
                     trace_id=trace_id,
                     timeout_sec=timeout,
+                    # Both tools are consequential. Pressing submit on the page
+                    # is the user's approval, so the gate must not pause the run.
+                    authorization_context={"approved_tool_calls": [tool_name]},
                 ),
                 timeout=timeout + 30,
             )

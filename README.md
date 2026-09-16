@@ -1,4 +1,6 @@
-# 图像工作室 · image-generation-plugin 2.0
+# 图像工作室 · image-generation-plugin
+
+> English: [README.en.md](README.en.md)
 
 插件自带前端页面、Web API 与图像工具。项目本体提供插件注册、用户鉴权、ToolExecutor、页面桥接，以及一份通用的**插件存储服务**；没有新增宿主业务接口或宿主数据库表。
 
@@ -77,14 +79,31 @@ OpenAI 官方把改图放在 `/images/edits`；OpenRouter 这类聚合服务没�
 
 统计口径：一次通过参数校验并入账的生成 / 改图计一次使用，含失败和缓存命中；总任务数为全部历史，其余指标属于所选周期。新产出数排除缓存；活跃用户按提交身份去重，不计缺失身份的 `unknown` 工具调用。图表按 UTC 自然日分桶、补齐零值。所有已认证模块访问者可看汇总统计，图片与任务始终按当前用户隔离。
 
+## 审批
+
+`image_generate_tool` 与 `image_edit_tool` 调用收费服务并写文件，声明了 `consequential = True`：
+聊天里的 `/draw`、`/edit` 以及 Agent 规划出的调用会先经过宿主的人工审批闸门。
+图像工作室页面上点"生成"本身就是用户的确认，所以 `web.py` 调工具时带上
+`authorization_context={"approved_tool_calls": [tool_name]}`，页面提交不会被挂起。
+若某个部署不需要审批，在宿主 `config.yaml` 的 `tools.approval_exempt_tools` 里列出这两个工具名。
+
 ## 验证
 
-在项目根目录运行：
+目录结构遵循 [plugin-template](https://github.com/sxf51/plugin-template)。在插件目录内：
 
-```powershell
-.venv/Scripts/python.exe -m pytest plugins/image-generation-plugin/tests/test_studio.py -q --basetemp data/.test-image-studio
-node --test plugins/image-generation-plugin/tests/studio-ui.test.mjs
-.venv/Scripts/python.exe -m ruff check plugins/image-generation-plugin
+```bash
+uv sync
+uv run pytest
+uv run ruff check .
+uv run python main.py doctor
 ```
 
-后端测试启动独立的 `redis-server`，使用动态本地端口和临时目录，结束后关闭；不会连接或清空项目 Redis。未安装 `redis-server` 时该集成测试组跳过。UI 测试使用宿主前端已有的 jsdom 依赖。测试覆盖用户隔离、参考图校验、编辑链、历史持久化、并发限制、Redis 缓存 TTL、统计、Redis 故障和页面交互，不调用收费图像 API。
+在项目根目录（真实 `PluginManager`）：
+
+```bash
+uv run pytest plugins/image-generation-plugin/tests -q
+uv run ruff check plugins/image-generation-plugin --no-respect-gitignore
+node --test plugins/image-generation-plugin/tests/studio-ui.test.mjs
+```
+
+存储集成测试启动独立的 `redis-server`，使用动态本地端口和临时目录，结束后关闭；不会连接或清空项目 Redis。未安装 `redis-server` 时该组测试跳过。UI 测试使用宿主前端已有的 jsdom 依赖。测试覆盖用户隔离、参考图校验、编辑链、历史持久化、并发限制、Redis 缓存 TTL、统计、Redis 故障和页面交互，不调用收费图像 API。

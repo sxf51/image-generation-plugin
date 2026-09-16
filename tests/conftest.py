@@ -97,6 +97,9 @@ def redis_url(tmp_path_factory: Any) -> str:
     """Start an isolated Redis for the host-backed image integration tests."""
     executable = shutil.which("redis-server")
     if not executable:
+        if os.environ.get("CI"):
+            # CI installs redis-server; a skip there would pass without testing storage.
+            pytest.fail("redis-server is not on PATH, but CI is expected to install it")
         pytest.skip("redis-server is required for plugin storage integration tests")
     directory = tmp_path_factory.mktemp("image-studio-redis")
     with socket.socket() as sock:

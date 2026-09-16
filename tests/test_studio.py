@@ -12,16 +12,46 @@ from urllib import error
 
 import pytest
 import redis
+from harness.fakes import FakeStorage
 from PIL import Image
 
-# These storage-integration tests exercise the host's Redis-backed storage
-# factory.  The standalone template harness has no equivalent host module;
-# its generic contract tests cover the plugin without requiring the monorepo.
-pytest.importorskip("extension.plugin_storage")
-
-from extension.plugin_storage import PluginStorageFactory
+try:
+    from extension.plugin_storage import PluginStorageFactory
+except ImportError:  # standalone: no host source, or none of its dependencies
+    PluginStorageFactory = None
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+class RedisBackedStorage(FakeStorage):
+    """The harness's stand-in storage with a real Redis behind `client()`.
+
+    The studio keeps its ledger in Redis, so the stand-in's always-None client
+    would only ever test the unavailable path. Inside the host repository the
+    real factory is used instead, so both are held to the same tests.
+    """
+
+    def __init__(self, root, user_files_root, redis_url):
+        super().__init__(root, user_files_root)
+        self._redis = redis.Redis.from_url(redis_url)
+
+    def client(self):
+        return self._redis
+
+    def available(self):
+        return True
+
+    def close(self):
+        self._redis.close()
+
+
+def scoped_storage(tmp_path, uploads, redis_url):
+    """One storage object scoped to this plugin, from the host when the host imports."""
+    if PluginStorageFactory is None:
+        return RedisBackedStorage(tmp_path / "data", uploads, redis_url)
+    return PluginStorageFactory(data_root=tmp_path / "data", user_files_root=uploads, redis_url=redis_url)(
+        "image-generation-plugin"
+    )
 
 
 _MODULES = {}
@@ -57,6 +87,10 @@ class Registry:
 
 
 def unpack(response):
+    """Read a helper response, whichever backend produced it."""
+    content = getattr(response, "content", None)
+    if content is not None:
+        return content
     return json.loads(response.body) if hasattr(response, "body") else response
 
 
@@ -69,9 +103,7 @@ def setup(tmp_path, monkeypatch, redis_url):
     # The key namespace is now bound to the plugin, not to a throwaway directory, so
     # start each test from an empty database on the isolated test server.
     redis.Redis.from_url(redis_url).flushdb()
-    storage = PluginStorageFactory(data_root=tmp_path / "data", user_files_root=uploads, redis_url=redis_url)(
-        "image-generation-plugin"
-    )
+    storage = scoped_storage(tmp_path, uploads, redis_url)
     output = storage.dir("images")
     plugin = SimpleNamespace(name="image-generation-plugin", config={"output": {"keep_last": 200}})
     module = load("web")
@@ -146,6 +178,8 @@ async def test_async_submission_and_reopen(setup):
     assert reopened.get(task_id, "alice")["status"] == "success"
     assert calls[0][0] == "image_generate_tool"
     assert calls[0][1]["actor_id"] == "alice"
+    # Submitting from the page is the approval for this consequential tool.
+    assert calls[0][2]["authorization_context"] == {"approved_tool_calls": ["image_generate_tool"]}
     assert reopened.gallery("alice")[0]["task_id"] == task_id
 
 

@@ -25,12 +25,18 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pytest>=8", "PyYAML>=6", "ruff>=0.13"]
+dev = ["pytest>=8", "pytest-asyncio>=1.2.0", "PyYAML>=6", "ruff>=0.13"]
 
 [tool.uv]
 # A plugin is loaded by the host from its directory, never installed, so
 # there is nothing here to build.
 package = false
+
+[tool.setuptools]
+# The version is dynamic, so uv still asks the build backend for metadata. With
+# several top-level modules setuptools refuses to guess what to package;
+# nothing is packaged, so say so.
+py-modules = []
 
 [tool.pytest.ini_options]
 minversion = "7.0"
