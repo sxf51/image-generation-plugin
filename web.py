@@ -243,6 +243,7 @@ def register_web_apis(web: Any, plugin: Any, runtime_context: dict[str, Any]) ->
                     tool_name,
                     tool_payload,
                     trace_id=trace_id,
+                    timeout_sec=timeout,
                 ),
                 timeout=timeout + 30,
             )

@@ -688,6 +688,7 @@ class ImageGenerateTool:
         # the object over, so nothing here knows where the data actually lives.
         self.storage = (runtime_context or {}).get("storage")
         self.llm = (runtime_context or {}).get("llm_config")
+        self.timeout_sec = float(_generation_options(_plugin_config(plugin), {})["timeout_seconds"])
 
     @_tracked("generate")
     async def execute(self, payload: dict[str, object]) -> dict[str, object]:
@@ -833,6 +834,7 @@ class ImageEditTool:
         self.plugin = plugin
         self.storage = (runtime_context or {}).get("storage")
         self.llm = (runtime_context or {}).get("llm_config")
+        self.timeout_sec = float(_generation_options(_plugin_config(plugin), {})["timeout_seconds"])
 
     @_tracked("edit")
     async def execute(self, payload: dict[str, object]) -> dict[str, object]:
