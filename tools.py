@@ -346,7 +346,7 @@ def _download_url(
     _validate_download_url(url, allow_private=allow_private)
 
     class ValidatingRedirectHandler(request.HTTPRedirectHandler):
-        def redirect_request(
+        def redirect_request(  # noqa: PLR0917
             self,
             req: request.Request,
             fp: Any,
