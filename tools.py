@@ -13,6 +13,7 @@ import base64
 import importlib.util
 import ipaddress
 import json
+import logging
 import mimetypes
 import re
 import socket
@@ -29,6 +30,39 @@ from extension.plugin import plugin_tool
 _studio_spec = importlib.util.spec_from_file_location("image_studio_tool_store", Path(__file__).with_name("studio.py"))
 _studio = importlib.util.module_from_spec(_studio_spec)
 _studio_spec.loader.exec_module(_studio)
+logger = logging.getLogger(__name__)
+
+
+def _safe_error_message(exc: BaseException) -> str:
+    """Return a useful diagnostic without exposing credentials or provider bodies."""
+    text = str(exc).strip().replace("\n", " ")
+    if len(text) > _MAX_DIAGNOSTIC_LENGTH:
+        text = text[:_MAX_DIAGNOSTIC_LENGTH - 3] + "..."
+    for marker in ("bearer ", "api_key=", "api-key=", "authorization:"):
+        if marker in text.casefold():
+            return "provider request failed (sensitive details redacted)"
+    return text or exc.__class__.__name__
+
+
+def _error_result(*, tool: str, trace_id: str, error_code: str, report: str, exc: BaseException | None = None, **fields: Any) -> dict[str, Any]:
+    if exc is not None:
+        logger.warning(
+            "image plugin %s failed trace_id=%s error_code=%s: %s",
+            tool,
+            trace_id,
+            error_code,
+            _safe_error_message(exc),
+            exc_info=logger.isEnabledFor(logging.DEBUG),
+        )
+    return {
+        "status": "error",
+        "tool": tool,
+        "trace_id": trace_id,
+        "error_code": error_code,
+        "error": _safe_error_message(exc) if exc is not None else error_code,
+        "report": report,
+        **fields,
+    }
 
 
 def _tracked(mode):
@@ -38,7 +72,18 @@ def _tracked(mode):
             # Page submissions are recorded at the executor boundary, including executor failures.
             if payload.get("source") == "plugin-page":
                 return await method(self, payload)
-            ledger = _studio.Store(self.storage)
+            try:
+                ledger = _studio.Store(self.storage)
+            except _studio.StorageUnavailable as exc:
+                trace_id = _trace_id(payload, f"trace-image-{mode}")
+                tool_name = "image_edit_tool" if mode == "edit" else "image_generate_tool"
+                return _error_result(
+                    tool=tool_name,
+                    trace_id=trace_id,
+                    error_code="storage_unavailable",
+                    report="Image task could not start because plugin storage is unavailable. Check Redis and try again.",
+                    exc=exc,
+                )
             owner = str(payload.get("actor_id") or "unknown")
             normalized = dict(payload)
             normalized["prompt"] = _extract_prompt(payload, _resolve_query(payload))
@@ -66,6 +111,7 @@ _DEFAULT_SIZE = "1024x1024"
 _DEFAULT_OPENAI_BASE = "https://api.openai.com/v1"
 _DEFAULT_OPENAI_MODEL = "gpt-image-1"
 _DEFAULT_MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
+_MAX_DIAGNOSTIC_LENGTH = 300
 _DEFAULT_HTTP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
     AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
@@ -208,7 +254,9 @@ _HTTP_STATUS_CODES = {
 }
 
 
-def _provider_error_code(exc: BaseException) -> str:
+def _provider_error_code(exc: BaseException) -> str:  # noqa: PLR0911
+    if isinstance(exc, _studio.StorageUnavailable):
+        return 'storage_unavailable'
     if isinstance(exc, error.HTTPError):
         for name, codes in _HTTP_STATUS_CODES.items():
             if exc.code in codes:
@@ -298,7 +346,7 @@ def _download_url(
     _validate_download_url(url, allow_private=allow_private)
 
     class ValidatingRedirectHandler(request.HTTPRedirectHandler):
-        def redirect_request(  # noqa: PLR0917
+        def redirect_request(
             self,
             req: request.Request,
             fp: Any,
@@ -785,20 +833,18 @@ class ImageGenerateTool:
                 "note": note,
                 "report": f"Image generated successfully: {len(image_paths)} file(s).",
             }
-        except (error.URLError, TimeoutError, ValueError, json.JSONDecodeError, OSError) as exc:
-            return {
-                "status": "error",
-                "tool": "image_generate_tool",
-                "trace_id": trace_id,
-                "query": query,
-                "prompt": prompt,
-                "provider": provider,
-                "model": model,
-                "error_code": _provider_error_code(exc),
-                "error": str(exc),
-                "report": f"Image generation failed: {exc}",
-            }
-
+        except Exception as exc:
+            code = _provider_error_code(exc)
+            logger.exception("Unexpected image tool failure trace_id=%s error_code=%s", trace_id, code)
+            return _error_result(
+                tool="image_tool",
+                trace_id=trace_id,
+                error_code=code,
+                report="Image task failed. Check the plugin configuration and service availability.",
+                exc=exc,
+                query=query,
+                prompt=prompt,
+            )
 
 @plugin_tool(
     "image_edit_tool",
@@ -915,18 +961,18 @@ class ImageEditTool:
                 "note": note,
                 "report": f"Image edited successfully: {len(image_paths)} file(s).",
             }
-        except (error.URLError, TimeoutError, ValueError, json.JSONDecodeError, OSError) as exc:
-            return {
-                "status": "error",
-                "tool": "image_edit_tool",
-                "trace_id": trace_id,
-                "query": query,
-                "prompt": prompt,
-                "error_code": _provider_error_code(exc),
-                "error": str(exc),
-                "report": f"Image edit failed: {exc}",
-            }
-
+        except Exception as exc:
+            code = _provider_error_code(exc)
+            logger.exception("Unexpected image tool failure trace_id=%s error_code=%s", trace_id, code)
+            return _error_result(
+                tool="image_tool",
+                trace_id=trace_id,
+                error_code=code,
+                report="Image task failed. Check the plugin configuration and service availability.",
+                exc=exc,
+                query=query,
+                prompt=prompt,
+            )
 
 @plugin_tool(
     "image_prompt_tool",
